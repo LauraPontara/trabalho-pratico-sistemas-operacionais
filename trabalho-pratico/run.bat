@@ -1,5 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
+:: Script para testar o simulador com caso de teste especificado
+:: Uso: run.bat ^<nome_do_arquivo^>
+:: Exemplo: run.bat entrada_pequena
 
 if "%1"=="" (
     echo Uso: run.bat ^<nome_do_arquivo^>

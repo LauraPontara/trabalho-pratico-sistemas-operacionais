@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script para testar o simulador com todos os casos de teste
+# Script para testar o simulador com todos os casos de teste para Linux/Mac
 
 echo "========================================="
 echo "  Simulador de Memória Virtual - Testes"
