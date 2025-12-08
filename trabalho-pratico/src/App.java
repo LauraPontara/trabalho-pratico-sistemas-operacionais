@@ -1,123 +1,122 @@
 import java.util.Scanner;
 import policies.*;
-import policies.PageReplacementPolicy;
 
 /**
- * Classe principal do Simulador de Memória Virtual.
- * 
- * Este programa simula o comportamento de um sistema de memória virtual
- * com paginação, testando 4 políticas diferentes de substituição de páginas:
- * - FIFO (First In, First Out)
- * - RAND (Random)
- * - LRU (Least Recently Used)
- * - MIN (Optimal)
- * 
- * <p><b>Entrada:</b> Lê da entrada padrão (System.in) via redirecionamento</p>
- * <p><b>Saída:</b> Escreve na saída padrão (System.out) via redirecionamento</p>
- * 
- * <p><b>Formato de uso:</b></p>
- * <pre>
- * javac App.java
- * java App < entrada.txt > saida.txt
- * </pre>
- * 
- * @author Sistema Operacional - Trabalho Prático
- * @version 1.0
+ * Virtual Memory Simulator.
+ * Tests FIFO, RAND, LRU, and MIN page replacement policies.
  */
 public class App {
     
-    /**
-     * Método principal que executa o simulador.
-     * 
-     * Lê os parâmetros da entrada, calcula valores derivados,
-     * processa cada sequência de requisições e simula com as 4 políticas.
-     * 
-     * @param args Argumentos da linha de comando (não utilizados)
-     * @throws Exception Se houver erro na leitura da entrada
-     */
-    public static void main(String[] args) throws Exception {
+    private static final PageReplacementPolicy[] POLICIES = {
+        new FIFOPolicy(),
+        new RANDPolicy(),
+        new LRUPolicy(),
+        new MINPolicy()
+    };
+    
+    public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         
-        // 1. Ler configurações
-        int M = sc.nextInt();        // Tamanho da RAM
-        int V = sc.nextInt();        // Tamanho da memória virtual
-        @SuppressWarnings("unused")
-        String arch = sc.next();     // Arquitetura
-        int P = sc.nextInt();        // Número de páginas virtuais
+        SimulationConfig config = parseConfiguration(sc);
+        printSystemParameters(config);
         
-        // 2. Calcular parâmetros derivados
-        int Sp = V / P;              // Tamanho da página
-        int Nframes = M / Sp;        // Número de frames na RAM
-        int swapSize = V - M;        // Tamanho do Swap
+        int numSequences = sc.nextInt();
         
-        // 3. Imprimir parâmetros calculados
-        System.out.println(Sp);
-        System.out.println(Nframes);
-        System.out.println(swapSize);
+        for (int i = 0; i < numSequences; i++) {
+            processSequence(sc, config, i + 1);
+        }
+        
+        sc.close();
+    }
+    
+    /**
+     * Parses initial configuration from input stream.
+     * 
+     * @param sc Input scanner
+     * @return Configuration object with system parameters
+     */
+    private static SimulationConfig parseConfiguration(Scanner sc) {
+        int ramSize = sc.nextInt();
+        int virtualMemorySize = sc.nextInt();
+        
+        // Architecture token is read to respect input format but intentionally ignored.
+        // Virtual memory size (V) is already provided numerically above.
+        sc.next();
+        
+        int numPages = sc.nextInt();
+        
+        int pageSize = virtualMemorySize / numPages;
+        int numFrames = ramSize / pageSize;
+        int swapSize = virtualMemorySize - ramSize;
+        
+        return new SimulationConfig(pageSize, numFrames, swapSize);
+    }
+    
+    private static void printSystemParameters(SimulationConfig config) {
+        System.out.println(config.pageSize);
+        System.out.println(config.numFrames);
+        System.out.println(config.swapSize);
         System.out.println();
+    }
+    
+    private static void processSequence(Scanner sc, SimulationConfig config, int sequenceNumber) {
+        int numRequests = sc.nextInt();
+        int[] requests = new int[numRequests];
         
-        // 4. Ler número de sequências
-        int N = sc.nextInt();
+        for (int i = 0; i < numRequests; i++) {
+            requests[i] = sc.nextInt();
+        }
         
-        // 5. Processar cada sequência
-        for (int i = 0; i < N; i++) {
-            int R = sc.nextInt();    // Número de requisições
-            int[] requests = new int[R];
-            
-            // Ler requisições
-            for (int j = 0; j < R; j++) {
-                requests[j] = sc.nextInt();
+        System.out.println(sequenceNumber);
+        System.out.println();
+        printRequestSequence(requests);
+        
+        Simulator simulator = new Simulator(config.numFrames);
+        
+        for (PageReplacementPolicy policy : POLICIES) {
+            SimulationResult result = simulator.simulate(policy, requests);
+            printSimulationReport(result);
+        }
+    }
+    
+    private static void printRequestSequence(int[] requests) {
+        for (int i = 0; i < requests.length; i++) {
+            System.out.print(requests[i]);
+            if (i < requests.length - 1) {
+                System.out.print(" ");
             }
-            
-            // Imprimir número da sequência
-            System.out.println(i + 1);
+        }
+        System.out.println();
+    }
+    
+    /**
+     * Prints simulation results in the required output format.
+     * 
+     * @param result Simulation result to print
+     */
+    private static void printSimulationReport(SimulationResult result) {
+        System.out.println(result.policyName());
+        System.out.println(result.executionTime());
+        System.out.println(result.pageFaults());
+        
+        if (result.pagesInSwap().isEmpty()) {
             System.out.println();
-            
-            // Imprimir a sequência de requisições
-            for (int j = 0; j < requests.length; j++) {
-                System.out.print(requests[j]);
-                if (j < requests.length - 1) {
+        } else {
+            int count = 0;
+            for (int page : result.pagesInSwap()) {
+                System.out.print(page);
+                count++;
+                if (count < result.pagesInSwap().size()) {
                     System.out.print(" ");
                 }
             }
             System.out.println();
-            
-            // 6. Criar simulador
-            Simulator simulator = new Simulator(Nframes);
-            
-            // 7. Simular cada política
-            PageReplacementPolicy[] policies = {
-                new FIFOPolicy(),
-                new RANDPolicy(),
-                new LRUPolicy(),
-                new MINPolicy()
-            };
-            
-            for (PageReplacementPolicy policy : policies) {
-                Simulator.SimulationResult result = simulator.simulate(policy, requests);
-                
-                // Imprimir resultados
-                System.out.println(result.policyName);
-                System.out.println(result.executionTime);
-                System.out.println(result.pageFaults);
-                
-                // Imprimir páginas no Swap
-                if (result.pagesInSwap.isEmpty()) {
-                    System.out.println();
-                } else {
-                    int count = 0;
-                    for (int page : result.pagesInSwap) {
-                        System.out.print(page);
-                        count++;
-                        if (count < result.pagesInSwap.size()) {
-                            System.out.print(" ");
-                        }
-                    }
-                    System.out.println();
-                }
-            }
         }
-        
-        sc.close();
+    }
+    
+    /**
+     * Internal configuration holder.
+     */
+    private static record SimulationConfig(int pageSize, int numFrames, int swapSize) {
     }
 }

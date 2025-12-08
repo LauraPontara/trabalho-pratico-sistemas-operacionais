@@ -3,39 +3,33 @@ package policies;
 import java.util.Set;
 
 /**
- * Interface que define o contrato para políticas de substituição de páginas.
- * Cada política implementa uma estratégia diferente para escolher qual página
- * remover da memória RAM quando ela está cheia.
- * 
- * @author Sistema Operacional - Trabalho Prático
- * @version 1.0
+ * Defines the contract for page replacement strategies.
  */
 public interface PageReplacementPolicy {
     
     /**
-     * Retorna o nome da política de substituição.
+     * Returns the identifier of the policy.
      * 
-     * @return Nome da política (ex: "FIFO", "LRU", "RAND", "MIN")
+     * @return Policy name
      */
     String getName();
     
     /**
-     * Seleciona a página vítima para ser removida da memória.
+     * Identifies the frame to be replaced based on the policy rules.
      * 
-     * @param frames Conjunto de páginas atualmente carregadas na RAM
-     * @param futureRequests Array completo de requisições de páginas
-     * @param currentIndex Índice da requisição atual no array
-     * @return Número da página que deve ser removida
+     * @param frames Pages currently loaded in RAM
+     * @param futureRequests Complete page request sequence
+     * @param currentIndex Current position in the request sequence
+     * @return Page number to be evicted
      */
     int selectVictim(Set<Integer> frames, int[] futureRequests, int currentIndex);
     
     /**
-     * Notifica a política que uma página foi acessada.
-     * Usado por políticas que precisam rastrear acessos (como FIFO e LRU).
+     * Notifies the policy that a page has been accessed.
+     * Useful for history-based policies.
      * 
-     * @param page Número da página acessada
+     * @param page Page number accessed
      */
     default void notifyPageAccess(int page) {
-        // Implementação padrão vazia - políticas que precisam podem sobrescrever
     }
 }
