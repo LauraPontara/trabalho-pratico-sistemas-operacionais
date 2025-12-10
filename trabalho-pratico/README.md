@@ -129,60 +129,60 @@ Os testes foram executados com sucesso em 6 arquivos de entrada diferentes, vari
 
 A política MIN, como esperado, apresentou o **melhor desempenho em todos os cenários**, servindo como referência ideal:
 
-- **small (2048 bytes, 2 processos):** 13 e 9 page faults (processos 1 e 2)
-- **medium (2048 bytes, 64 frames, 3 processos):** 77, 103, e 140 page faults
-- **large (256 bytes, 8192 acessos):** 6636 page faults (idêntico a todas as políticas - sem substituição necessária)
-- **pequena (2048 bytes, 2 KB, 3 processos):** 13, 9, e 11 page faults
-- **media (2048 bytes, 64 frames, 6 processos):** 77, 103, 140, 107, 105, e 119 page faults
-- **grande (256 bytes, 8192 acessos, 3 processos):** 6636 page faults (todos iguais)
+- **small (2048 bytes, 3 processos):** 13, 9, e 11 page faults (processos 1, 2 e 3)
+- **medium (2048 bytes, 5 processos):** 77, 103, 140, 107, e 212 page faults
+- **large (4096 bytes, 2 processos):** 6636 e 6636 page faults
+- **pequena (1024 bytes, 3 processos):** 13, 10, e 10 page faults
+- **media (2048 bytes, 4 processos):** 147, 163, 161, e 157 page faults
+- **grande (256 bytes, 1 processo):** 8339 page faults
 
-**Observação importante:** No caso "grande" com apenas 256 bytes de memória e 8192 processos, o desempenho de todas as políticas foi idêntico (6636 page faults) devido à extrema restrição de memória, tornando qualquer estratégia de substituição igualmente ineficaz.
+**Observação importante:** No caso "large" com 4096 bytes de memória, todas as políticas tiveram performance idêntica (6636 page faults para ambos os processos). No caso "grande" com apenas 256 bytes de memória, MIN, FIFO e LRU tiveram 8339 page faults, enquanto RAND teve 8341 page faults, demonstrando que a extrema restrição de memória torna as estratégias igualmente ineficazes.
 
 ### Resultados da Política FIFO
 
 A política FIFO apresentou desempenho consistente, mas geralmente inferior às políticas MIN e LRU:
 
-- **small:** 16 e 11 page faults
-- **medium:** 80, 122, e 203 page faults
-- **large:** 6636 page faults
-- **pequena:** 16, 11, e 14 page faults
-- **media:** 80, 122, 203, 144, 172, e 316 page faults
-- **grande:** 6636 page faults
+- **small:** 16, 11, e 14 page faults
+- **medium:** 80, 122, 203, 144, e 394 page faults
+- **large:** 6636 e 6636 page faults
+- **pequena:** 16, 13, e 12 page faults
+- **media:** 227, 413, 143, e 133 page faults
+- **grande:** 8339 page faults
 
-**Análise:** A política FIFO apresentou aproximadamente **19-45% mais page faults** em comparação com MIN, demonstrando a limitação de não considerar o padrão de uso das páginas.
+**Análise:** A política FIFO apresentou aproximadamente **4-86% mais page faults** em comparação com MIN (variando desde casos onde o desempenho foi similar até casos com grandes diferenças), demonstrando a limitação de não considerar o padrão de uso das páginas.
 
 ### Resultados da Política LRU
 
 A política LRU apresentou o **segundo melhor desempenho**, aproximando-se da política MIN:
 
-- **small:** 17, 10 page faults
-- **medium:** 80, 126, e 211 page faults
-- **large:** 6636 page faults
-- **pequena:** 17, 10, e 13 page faults
-- **media:** 80, 126, 211, 150, 184, e 312 page faults
-- **grande:** 6636 page faults
+- **small:** 17, 10, e 13 page faults
+- **medium:** 80, 126, 211, 150, e 383 page faults
+- **large:** 6636 e 6636 page faults
+- **pequena:** 15, 12, e 13 page faults
+- **media:** 231, 411, 143, e 137 page faults
+- **grande:** 8339 page faults
 
-**Análise:** LRU superou FIFO na maioria dos casos, ficando apenas **15-30% acima de MIN**, demonstrando que considerar a recência de uso é uma boa aproximação do comportamento ótimo.
+**Análise:** LRU teve desempenho variável, em alguns casos próximo ao MIN (como no small e medium) e em outros similar ao FIFO, ficando **4-81% acima de MIN**, demonstrando que considerar a recência de uso pode ser eficaz dependendo do padrão de acesso.
 
 ### Resultados da Política RAND
 
 A política RAND apresentou o **desempenho mais imprevisível**:
 
-- **small:** 16, 10 page faults
-- **medium:** 78, 125, e 216 page faults
-- **large:** 6636 page faults
-- **pequena:** 16, 10, e 13 page faults
-- **media:** 78, 125, 216, 142, 163, e 313 page faults
-- **grande:** 6636 page faults
+- **small:** 16, 10, e 13 page faults
+- **medium:** 78, 125, 216, 142, e 416 page faults
+- **large:** 6636 e 6636 page faults
+- **pequena:** 16, 14, e 14 page faults
+- **media:** 231, 395, 134, e 126 page faults
+- **grande:** 8341 page faults
 
-**Análise:** Surpreendentemente, em alguns casos específicos (como no processo 1 do medium com 78 page faults), RAND teve desempenho próximo ou até melhor que FIFO e LRU. Isso demonstra a natureza estocástica do algoritmo e sua dependência dos padrões de acesso das páginas.
+**Análise:** RAND apresentou desempenho muito variável, desde próximo ao ótimo (como no medium processo 1 com apenas 1% acima de MIN) até muito inferior (96% acima no medium processo 5). Isso demonstra a natureza estocástica do algoritmo, que pode ocasionalmente ter sorte nas escolhas aleatórias, mas não oferece garantias de desempenho consistente.
 
 ### Conclusões Gerais
 
 1. **MIN** é comprovadamente ótimo, mas impraticável em sistemas reais.
-2. **LRU** é a melhor escolha prática, apresentando desempenho consistentemente próximo do ótimo.
-3. **FIFO** é mais simples de implementar, mas sofre com desempenho inferior em cenários com localidade temporal.
-4. **RAND** tem desempenho imprevisível e geralmente não é recomendado, exceto em situações onde a simplicidade é crítica.
+2. **LRU** teve desempenho similar às outras políticas práticas (FIFO e RAND), não se destacando significativamente.
+3. **FIFO** é mais simples de implementar, mas apresenta desempenho significativamente inferior ao ótimo.
+4. **LRU** e **RAND** tiveram desempenho similar na maioria dos cenários testados, ambos ficando bem abaixo do ótimo.
 5. Em cenários de **extrema restrição de memória** (como "grande"), todas as políticas convergem para desempenho similar, pois a capacidade limitada domina o comportamento do sistema.
 6. O **tamanho da memória** e o **padrão de acesso** são fatores críticos que influenciam significativamente a eficácia de cada política.
 
